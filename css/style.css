@@ -1,0 +1,36 @@
+#ball {
+    height: 50px;
+    width: 50px;
+    background-color: #bbb;
+    border-radius: 50%;
+    /* left: 80vh;
+    top: 10vw; */
+    position: absolute;
+}
+
+#player {
+    height: 0;
+    width: 0;
+    /* position: absolute; */
+    border-top: 60px solid transparent;
+    border-bottom: 60px solid transparent;
+    border-left: 80px solid cornflowerblue;
+}
+#player_head {
+    height: 50px;
+    width: 50px;
+    background-color: bisque;
+    border-radius: 50%;
+    bottom: 25px;
+    right: 25px;
+    position: relative;
+}
+
+.goal { 
+    height: 40vh;
+    width: 5vw;
+    background-color: chocolate;
+    right: 0;
+    bottom: 25vh;
+    position: absolute;
+}
