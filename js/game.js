@@ -1,3 +1,4 @@
+
 function range(start, stop, step) {
     if (typeof stop == 'undefined') {
         stop = start
@@ -14,12 +15,19 @@ function range(start, stop, step) {
     return result
 };
 
+function sum(arr) {
+    total = arr.reduce((totalValue, currentValue) => {
+        return totalValue + currentValue
+    }, 0);
+    return total
+}
+
 var max_distance = 0 // medida en pixeles de la diagonal de la pantalla, se considera como la distancia maxima entre el player y la pelota 
 function get_screen_diagonal() {
     w = window.outerWidth; 
     h = window.outerHeight; 
     max_distance = Math.sqrt(w*w + h*h);
-    console.log("screen diagonal:", max_distance)
+    // console.log("screen diagonal:", max_distance)
     return max_distance
 }
 
@@ -109,8 +117,8 @@ function get_alpha(ball_coords, player_coords, player_initial_rotation) {
     if (theta_deg == 0)
         best_alpha = [0, "recto"]
 
-    console.log("player init rotation", player_initial_rotation, "turn left", turn_left_deg, "turn right", turn_right_deg)
-    console.log("result", best_alpha)
+    // console.log("player init rotation", player_initial_rotation, "turn left", turn_left_deg, "turn right", turn_right_deg)
+    // console.log("result", best_alpha)
     return best_alpha
 }
 
@@ -120,83 +128,244 @@ function get_alpha(ball_coords, player_coords, player_initial_rotation) {
   * alpha : cuántos grados de rotación hacen falta (y en qué dirección) para que el jugador vea a la pelota directamente 
 */
 
-function defuzzy(delta_s, alpha) {
+function eval_horn(delta_s, alpha, consecuente_v, consecuente_beta) {
     output = []
     D = get_screen_diagonal()
     max_angle = 180
     max_beta = 15
     max_distance = 40
     // clausulas para obtener beta 
-    consecuente = range(-max_beta, max_beta, 0.5)
     // clausula 1
     // si s = lejos y alfa = muy girado, entonces beta = mucho
-    c1 = Math.min(
-        consecuente.map(function(x) {
-            return get_membership_value(x, [-max_beta, max_beta], [0, max_beta/2], [max_beta/2, 0], -max_beta, max_beta) // girar mucho
-        }).push(Math.min(
-            get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
-            get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
-        ))
-    )
-    // clausula 2
-    //si s = lejos y alfa = girado, entonces v = rapido y beta = poco
-    c2 = Math.min(
-        // get_membership_value(alpha, -max_angle, 0, max_angle/2, -max_angle, max_angle) // counterclockwise
-        consecuente.map(function(x) {
-            return get_membership_value(x, 0, max_beta/2, max_beta/2, -max_beta, max_beta) // girar poco
-        }).push(Math.min(
-            get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
-            get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
-        ))
-    )
-    // clausula 3
-    // si s = lejos y alfa = recto, entonces v = rapido y beta = recto
-    c3 = Math.min(
-        // get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto
-        consecuente.map(function(x) {
-            return get_membership_value(x, 0, max_beta/4, max_beta/4, -max_beta, max_beta) // ir recto
-        }).push(Math.min(
-            get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
-            get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto
-        ))
-    )
-    // union de las 3 clausulas 
-    union_clause = Math.max(c1, c2, c3)
-    console.log("evaluacion de las 3 clausulas para beta:", union_clause)
-    output.push(union_clause)
+    if (typeof consecuente_beta != "undefined") {
+        bc1 = Math.min(
+                get_membership_value(consecuente_beta, [-max_beta, max_beta], [0, max_beta/2], [max_beta/2, 0], -max_beta, max_beta), // girar mucho
+                Math.min(
+                    get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                    get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
+            )
+        )
+        // clausula 2 
+        //si s = lejos y alfa = girado, entonces v = rapido y beta = poco
+        bc2 = Math.min(
+            // get_membership_value(alpha
+                get_membership_value(consecuente_beta, 0, max_beta/2, max_beta/2, -max_beta, max_beta), // girar poco
+                Math.min(
+                    get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                    get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
+            )
+        )
+        // clausula 3
+        // si s = lejos y alfa = recto, entonces v = rapido y beta = recto
+        bc3 = Math.min(
+            // get_membership_value(alpha
+                get_membership_value(consecuente_beta, 0, max_beta/4, max_beta/4, -max_beta, max_beta), // ir recto
+                Math.min(
+                    get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                    get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto
+            )
+        )
+        // clausula 4
+        // si s = medio y alfa = muy girado, entonces beta = mucho
+        bc4 = Math.min(
+            get_membership_value(consecuente_beta, [-max_beta, max_beta], [0, max_beta/2], [max_beta/2, 0], -max_beta, max_beta), // girar mucho
+            Math.min(
+                get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
+            )
+        )
+        // clausula 5
+        //si s = medio y alfa = girado, entonces beta = poco
+        bc5 = Math.min(
+            // get_membership_value(alpha
+                get_membership_value(consecuente_beta, 0, max_beta/2, max_beta/2, -max_beta, max_beta), // girar poco
+                Math.min(
+                    get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                    get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
+            )
+        )
+        // clausula 6
+        // si s = medio y alfa = recto, entonces beta = recto
+        bc6 = Math.min(
+            // get_membership_value(alpha
+                get_membership_value(consecuente_beta, 0, max_beta/4, max_beta/4, -max_beta, max_beta), // ir recto
+                Math.min(
+                    get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                    get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto
+            )
+        )
+        // clausula 7
+        // si s = cerca y alfa = muy girado, entonces beta = mucho
+        bc7 = Math.min(
+            get_membership_value(consecuente_beta, [-max_beta, max_beta], [0, max_beta/2], [max_beta/2, 0], -max_beta, max_beta), // girar mucho
+            Math.min(
+                get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
+                get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
+            )
+        )
+        // clausula 5
+        //si s = cerca y alfa = girado, entonces beta = poco
+        bc8 = Math.min(
+            // get_membership_value(alpha
+                get_membership_value(consecuente_beta, 0, max_beta/2, max_beta/2, -max_beta, max_beta), // girar poco
+                Math.min(
+                    get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
+                    get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
+            )
+        )
+        // clausula 6
+        // si s = cerca y alfa = recto, entonces beta = recto
+        bc9 = Math.min(
+            // get_membership_value(alpha
+                get_membership_value(consecuente_beta, 0, max_beta/4, max_beta/4, -max_beta, max_beta), // ir recto
+                Math.min(
+                    get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
+                    get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto
+            )
+        )
+
+        // union de las 3 clausulas 
+        clausulas_beta = [bc1, bc2, bc3, bc4, bc5, bc6, bc7, bc8, bc9]
+        console.log("resultados de clausulas beta",bc1, bc2, bc3, bc4, bc5, bc6, bc7, bc8, bc9)
+        return clausulas_beta
+    }
+    // bunion_clause = Math.max(bc1, bc2, bc3, bc4, bc5, bc6, bc7, bc8, bc9)
+    // console.log("evaluacion de las 3 clausulas para beta:", bunion_clause)
+
     // return union_clause
 
-    // clausulas para obtener la distancia a recorrer (velocidad)
-    // clausula 1 : si s = lejos y alfa = muy girado, entonces v = rapido
-    c1 = Math.min(
-        consecuente.map(function(x) {
-            return get_membership_value(x, max_distance, max_distance/2, 0, 0, max_distance) // rapido
-        }).push(Math.min(
-            get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
-            get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
-        ))
-    )
-    // clausula 2 : si s = medio y alfa = muy girado, entonces v = medio
-    // c2 = get_membership_value(delta_s, D/2, D/4, D/4, 0, D) // medio
-    c2 = Math.min(
-        consecuente.map(function(x) {
-            return get_membership_value(x, max_distance/2, max_distance/4, max_distance/4, 0, max_distance) // medio
-        }).push(Math.min(
-            get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
-            get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
-        ))
-    )
-    // clausula 3 : si s = cerca y alfa = muy girado, entonces v = lento
-    // c3 = get_membership_value(delta_s, 0, 0, D/2, 0, D) // cerca
-    c3 = Math.min(
-        consecuente.map(function(x) {
-            return get_membership_value(x, 0, 0, max_distance/4, 0, max_distance) // lento
-        }).push(Math.min(
-            get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
-            get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
-        ))
-    )
-    output.push(union_clause)
+    if (typeof consecuente_v != "undefined") {
+        // clausulas para obtener la distancia a recorrer (velocidad)
+        // clausula 1 : si s = lejos y alfa = muy girado, entonces v = rapido
+        vc1 = Math.min(
+                get_membership_value(consecuente_v, max_distance, max_distance/2, 0, 0, max_distance), // rapido
+                Math.min(
+                    get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                    get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
+            )
+        )
+        // clausula 2 : si s = lejos y alfa = girado, entonces v = rapido 
+        vc2 = Math.min(
+            get_membership_value(consecuente_v, max_distance, max_distance/2, 0, 0, max_distance), // rapido
+            Math.min(
+                get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
+            )
+        )
+        // clausula 3 : si s = lejos y alfa = recto, entonces v = rapido
+        vc3 = Math.min(
+            get_membership_value(consecuente_v, max_distance, max_distance/2, 0, 0, max_distance), // rapido
+            Math.min(
+                get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto 
+            )
+        )
+        // c2 = get_membership_value(delta_s, D/2, D/4, D/4, 0, D) // medio
+        // clausula 4 : si s = medio y alfa = muy girado, entonces v = medio
+        vc4 = Math.min(
+                get_membership_value(consecuente_v, max_distance/2, max_distance/4, max_distance/4, 0, max_distance), // medio
+                Math.min(
+                    get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                    get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
+            )
+        )
+        // clausula 5 : si s = medio y alfa = girado, entonces v = medio
+        vc5 = Math.min(
+            get_membership_value(consecuente_v, max_distance/2, max_distance/4, max_distance/4, 0, max_distance), // medio
+            Math.min(
+                get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
+            )
+        )
+        // clausula 6 : si s = medio y alfa = recto, entonces v = medio
+        vc6 = Math.min(
+            get_membership_value(consecuente_v, max_distance/2, max_distance/4, max_distance/4, 0, max_distance), // medio
+            Math.min(
+                get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto 
+            )
+        )
+
+        // clausula 7 : si s = cerca y alfa = muy girado, entonces v = lento
+        vc7 = Math.min(
+            get_membership_value(consecuente_v, 0, 0, max_distance/4, 0, max_distance), // lento
+            Math.min(
+                get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
+                get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
+            )
+        )
+        // clausula 8 : si s = cerca y alfa = girado, entonces v = lento
+        vc8 = Math.min(
+            get_membership_value(consecuente_v, 0, 0, max_distance/4, 0, max_distance), // lento
+            Math.min(
+                get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
+                get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
+            )
+        )
+        // clausula 9 : si s = cerca y alfa = recto, entonces v = lento
+        vc9 = Math.min(
+            get_membership_value(consecuente_v, 0, 0, max_distance/4, 0, max_distance), // lento
+            Math.min(
+                get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
+                get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto 
+            )
+        )
+        clausulas_v = [vc1, vc2, vc3, vc4, vc5, vc6, vc7, vc8, vc9]
+        return clausulas_v
+    }
+    // console.log("resultados de clausulas beta",vc1, vc2, vc3, vc4, vc5, vc6, vc7, vc8, vc9)
+    // console.log("evaluacion de las 3 clausulas para la velocidad:", vunion_clause)
+    
+}
+function defuzzy(delta_s, alpha){
+    max_beta = 15
+    max_distance = 40
+    x_beta = range(-max_beta, max_beta, 5)
+    x_v = range(0, max_distance, 2)
+    v_res = []
+    beta_res = []
+    for (let index = 0; index < x_beta.length; index++) {
+        const beta = x_beta[index]
+        res_beta = (eval_horn(delta_s, alpha, undefined, beta))
+        beta_res.push(res_beta)
+    }
+    for (let index = 0; index < x_v.length; index++) {
+        const vel = x_v[index]
+        res_v = (eval_horn(delta_s, alpha, vel, undefined))
+        v_res.push(res_v)   
+    }
+    console.log("velocidad", v_res)
+    console.log("beta", beta_res)
+    // console.log("xv", x_v, x_beta)
+    y_velocidad = []
+    y_beta = []
+    v_res.forEach(element => {
+        y_velocidad.push(Math.max.apply(Math, element))
+    });
+    beta_res.forEach(element => {
+        y_beta.push(Math.max.apply(Math, element))
+    });
+    console.log("velocidad_p", y_velocidad)
+    console.log("beta_p", y_beta)
+
+    product = []
+    // obtencion de centro de gravedad - beta
+    for (let i = 0; i < x_beta.length; i++) {
+        product.push(x_beta[i] * y_beta[i])
+    }
+    cog_beta = sum(product) / sum(y_beta)
+    product = []
+    // obtencion de centro de gravedad - velocidad
+    for (let i = 0; i < x_v.length; i++) {
+        product.push(x_v[i] * y_velocidad[i])
+    }
+    cog_v = sum(product) / sum(y_velocidad)
+    return {
+        "beta": cog_beta,
+        "s": cog_v
+    }
+    // return [cog_beta, cog_v]
+
 }
 /*
  * Al ingresar un valor de input, mapea segun la funcion de pertenencia el valor resultante. 
@@ -209,41 +378,51 @@ function defuzzy(delta_s, alpha) {
 */
 function get_membership_value(input_value, max_member_value, left_range = 0, right_range = 0, min_f_value = 0, max_f_value = Number.POSITIVE_INFINITY){
     y = 0
+    // console.log("typeof maxnumber:", typeof max_member_value)
     // las funciones pueden tener mas de un peak
     if (typeof max_member_value != "number") {
         max_array = [...max_member_value]
         leftr_arr = [...left_range]
         rightr_arr = [...right_range]
         max_array.forEach(peak => {
-            if ((input_value >= (peak - left_range)) & ((peak + right_range) >= input_value)) {
-                peak_index = max_array.indexOf(peak)
+            peak_index = max_array.indexOf(peak)
+            // console.log("ranges", leftr_arr, rightr_arr)
+            // console.log("peak_index", peak_index, "input", input_value, "ranges", leftr_arr[peak_index], rightr_arr[peak_index], "arr", max_array)
+            if ((input_value >= (peak - leftr_arr[peak_index])) & ((peak + rightr_arr[peak_index]) >= input_value)) {
+                // console.log("p index", peak_index, input_value, max_array)
                 max_member_value = peak
                 left_range = leftr_arr[peak_index]
                 right_range = rightr_arr[peak_index]
             }
         });
     }
+    if (typeof max_member_value != "number") return 0
     // si el valor input se encuentra dentro de los valores con pertenencia 0 (fuera de los valores con pendiente)
-    if ((input_value > min_f_value & (input_value < max_member_value - left_range)) | ((input_value < max_f_value) & input_value > (max_member_value + right_range))) {
-        console.log("valor de pertenencia", y, "input_value", input_value, "pico_x", max_member_value, "right_range", right_range, "left_range", left_range)
+    if ((input_value >= min_f_value & (input_value <= max_member_value - left_range)) | ((input_value <= max_f_value) & input_value >= (max_member_value + right_range))) {
+        // console.log("valor de pertenencia", y, "input_value", input_value, "pico_x", max_member_value, "right_range", right_range, "left_range", left_range)
         return 0
     }
     // si el valor input esta dentro de los valores con pendiente
     //por el lado izquierdo
-    else if ((input_value >= (max_member_value - left_range) & (input_value < max_member_value))) {
+    if ((input_value >= (max_member_value - left_range) & (input_value < max_member_value))) {
         // obtener la pendiente del lado izquierdo
         m = 1 / (max_member_value - (max_member_value - left_range))
     }
     //por el lado derecho
-    if ((input_value > max_member_value) & ((max_member_value + right_range) >= input_value)){
+    else if ((input_value > max_member_value) & ((max_member_value + right_range) >= input_value)){
         m = - 1 / ((max_member_value - right_range) - max_member_value)
     }
+    // else return 0
+    // else {
+    //     console.log("typeof maxnumber:", typeof max_member_value)
+    //     console.log("no se encuentra en rango, vars:", input_value, max_member_value, left_range, right_range, min_f_value, max_f_value)
+    // }
     b = 1 - (m * max_member_value)
     y = (m * input_value) + b
-    console.log("m", m, "b", b)
-    console.log("y b4 cap", y)
+    // console.log("m", m, "b", b)
+    // console.log("y b4 cap", y)
     y = y < 0 ? 0 : y > 1 ? 1 : y // si el valor de pertenencia < 0 o > 1, redondear
-    console.log("valor de pertenencia", y, "input_value", input_value, "pico_x", max_member_value, "right_range", right_range, "left_range", left_range)
+    // console.log("valor de pertenencia", y, "input_value", input_value, "pico_x", max_member_value, "right_range", right_range, "left_range", left_range)
     return y  
 }
 
@@ -253,24 +432,34 @@ function get_membership_value(input_value, max_member_value, left_range = 0, rig
 */
 $(document).ready(function () {
     // iniciar jugador y pelota con posiciones random
-    angle = Math.floor((Math.random() * 360) + 1);
+    angle = Math.floor((Math.random() * 360) + 1) * -1;
     top_player = Math.floor((Math.random() * 60) + 21);
     left_player = Math.floor((Math.random() * 60) + 21);
     top_ball = Math.floor((Math.random() * 90) + 1);
     left_ball = Math.floor((Math.random() * 90) + 1);
-    $('#player').css({'position': 'absolute','bottom': top_player + 'vh', 'left': left_player+ 'vw', '-webkit-transform': 'rotate(-' + angle + 'deg)'});
+    $('#player').css({'position': 'absolute','bottom': top_player + 'vh', 'left': left_player+ 'vw', '-webkit-transform': 'rotate(' + angle + 'deg)'});
     $('#ball').css({'bottom': top_ball + 'vh', 'left': left_ball+ 'vw'});
-    get_screen_diagonal()
-    const player_coords = document.getElementById("player").getBoundingClientRect()
-    const ball_coords = document.getElementById("ball").getBoundingClientRect()
-    delta_s = get_delta_s()
-    alpha = get_alpha(
-        get_plane_position(ball_coords.top, ball_coords.left), 
-        get_plane_position(player_coords.top, player_coords.left), 
-        angle
-    )[0]
-    console.log("delta s", delta_s, "alpha", alpha)
-    defuzzy(delta_s, undefined)
-    defuzzy(undefined, alpha)
+    setInterval(function(){ 
+        const player_coords = document.getElementById("player").getBoundingClientRect()
+        const ball_coords = document.getElementById("ball").getBoundingClientRect()
+        delta_s = get_delta_s()
+        alpha = get_alpha(
+            get_plane_position(ball_coords.top, ball_coords.left), 
+            get_plane_position(player_coords.top, player_coords.left), 
+            angle
+        )[0]
+        console.log("delta s", delta_s, "alpha", alpha)
+        res = defuzzy(delta_s, alpha)
+        beta = res.beta
+        v = res.s
+        console.log("distancia", delta_s, "angulo", alpha, "resultados:", beta, v)
+        angle += beta
+        //mover el jugador 
+        player_left = player_coords.left + (v * Math.cos(angle * Math.PI / 180));
+        player_top = player_coords.top + (v * Math.sin(angle * Math.PI / 180));
+        console.log("l", player_left, "t", player_top, angle)
+        $('#player').css({'position': 'absolute','bottom': player_top + 'px', 'left': player_left+ 'px', '-webkit-transform': 'rotate(' + angle + 'deg)'});
+    }, 500);
+    
 });
 
