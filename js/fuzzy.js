@@ -33,6 +33,46 @@
 
 */
 
+
+/*
+                    PARTE FUZZY 
+    variables crisp (entrada):
+    - distancia entre el jugador y la pelota (delta s):
+        * lejos
+        * medio
+        * cerca
+    - angulo de rotacion del jugador hacia la pelota (alfa)
+        * clockwise
+        * counterclockwise
+        * recto
+
+    variables linguisticas de output:
+    - angulo de rotacion del jugador para la pelota (delta beta) -> hasta 45 grados
+        * girar a la derecha
+        * girar a la izquierda
+        * seguir recto
+    - velocidad del jugador (v):
+        * rapido
+        * medio
+        * lento 
+
+    clausulas de horn para la velocidad del jugador:
+    * [si s = lejos y angulo es clockwise <- valor constante , entonces v = rapido <- for de evaluacion (lamnda i)] <- min a ambos
+    * si s = medio, entonces v = medio
+    * si s = cerca, entonces v = lento
+    
+    [3, 5, 6, 7, 8]
+    [1, 6, 8, 9, 0]
+    [9, 5, 6, 8, 1]
+    y = max()
+
+    clausulas de horn para el angulo de rotacion del jugador:
+    * si alfa = clockwise, entonces beta = izquierda
+    * si alfa = counterclockwise, entonces beta = derecha
+    * si alfa = recto, entonces beta = recto
+
+*/
+
 function get_delta_s() {
     const player_coords = document.getElementById("player").getBoundingClientRect()
     const ball_coords = document.getElementById("ball").getBoundingClientRect()
