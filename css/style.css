@@ -6,6 +6,8 @@
     /* left: 80vh;
     top: 10vw; */
     position: absolute;
+    top: 50vh;
+    left: 50vw;
 }
 
 #player {
@@ -15,6 +17,9 @@
     border-top: 60px solid transparent;
     border-bottom: 60px solid transparent;
     border-left: 80px solid cornflowerblue;
+    position: absolute;
+    top: 46vh;
+    left: 42vw;
 }
 #player_head {
     height: 50px;

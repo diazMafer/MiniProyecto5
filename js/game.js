@@ -437,29 +437,35 @@ $(document).ready(function () {
     left_player = Math.floor((Math.random() * 60) + 21);
     top_ball = Math.floor((Math.random() * 90) + 1);
     left_ball = Math.floor((Math.random() * 90) + 1);
-    $('#player').css({'position': 'absolute','bottom': top_player + 'vh', 'left': left_player+ 'vw', '-webkit-transform': 'rotate(' + angle + 'deg)'});
-    $('#ball').css({'bottom': top_ball + 'vh', 'left': left_ball+ 'vw'});
-    setInterval(function(){ 
-        const player_coords = document.getElementById("player").getBoundingClientRect()
-        const ball_coords = document.getElementById("ball").getBoundingClientRect()
-        delta_s = get_delta_s()
-        alpha = get_alpha(
-            get_plane_position(ball_coords.top, ball_coords.left), 
-            get_plane_position(player_coords.top, player_coords.left), 
-            angle
-        )[0]
-        console.log("delta s", delta_s, "alpha", alpha)
-        res = defuzzy(delta_s, alpha)
-        beta = res.beta
-        v = res.s
-        console.log("distancia", delta_s, "angulo", alpha, "resultados:", beta, v)
-        angle += beta
-        //mover el jugador 
-        player_left = player_coords.left + (v * Math.cos(angle * Math.PI / 180));
-        player_top = player_coords.top + (v * Math.sin(angle * Math.PI / 180));
-        console.log("l", player_left, "t", player_top, angle)
-        $('#player').css({'position': 'absolute','bottom': player_top + 'px', 'left': player_left+ 'px', '-webkit-transform': 'rotate(' + angle + 'deg)'});
-    }, 500);
+    // $('#player').css({'position': 'absolute','bottom': top_player + 'vh', 'left': left_player+ 'vw', '-webkit-transform': 'rotate(' + angle + 'deg)'});
+    // $('#ball').css({'bottom': top_ball + 'vh', 'left': left_ball+ 'vw'});
+    // setInterval(function(){ 
+    //     const player_coords = document.getElementById("player").getBoundingClientRect()
+    //     const ball_coords = document.getElementById("ball").getBoundingClientRect()
+    //     delta_s = get_delta_s()
+    //     alpha = get_alpha(
+    //         get_plane_position(ball_coords.top, ball_coords.left), 
+    //         get_plane_position(player_coords.top, player_coords.left), 
+    //         angle
+    //     )[0]
+    //     if (alpha > 0.5 & delta_s > 5) { //si todavia esta lejos, que haga la parte fuzzy
+    //         // console.log("delta s", delta_s, "alpha", alpha)
+    //         // res = defuzzy(delta_s, alpha)
+    //         // beta = res.beta
+    //         // v = res.s
+    //         // console.log("distancia", delta_s, "angulo", alpha, "resultados:", beta, v)
+    //         // angle += beta
+    //         // //mover el jugador 
+    //         // player_left = player_coords.left + (v * Math.cos(angle * Math.PI / 180));
+    //         // player_top = player_coords.top + (v * Math.sin(angle * Math.PI / 180));
+    //         // console.log("l", player_left, "t", player_top, angle)
+    //         // $('#player').css({'position': 'absolute','bottom': player_top + 'px', 'left': player_left+ 'px', '-webkit-transform': 'rotate(' + angle + 'deg)'});
+    //         console.log("lejos")
+    //     }
+    //     else {// de lo contrario, que haga la parte estocastica
+    //         console.log("cerca")
+    //     }
+    // }, 10000);
     
 });
 
