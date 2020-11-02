@@ -15,4 +15,22 @@
 </div>
 
 </body>
+
+<script type="text/javascript">
+    var ball = document.getElementsById('ball');
+    var player = document.getElementById('player');
+    var winWidth = window.innerWidth;
+    var winHeight = window.innerHeight;
+
+    randomTopBall = Math.random() * winHeight;
+    randomLeftBall = Math.random() * winWidth;
+    randomTopPlayer = Math.random() * winHeight;
+    randomLeftPlayer = Math.random() * winWidth;
+
+    ball.style.top = randomTopBall +"px";
+    ball.style.left = randomLeftBall +"px";
+
+    player.style.top = randomTopPlayer +"px";
+    player.style.left = randomLeftPlayer +"px";
+</script>
 </html>
