@@ -7,7 +7,7 @@
     top: 10vw; */
     position: absolute;
     top: 50vh;
-    left: 50vw;
+    left: 35vw;
 }
 
 #player {
@@ -19,7 +19,7 @@
     border-left: 80px solid cornflowerblue;
     position: absolute;
     top: 46vh;
-    left: 42vw;
+    left: 45vw;
 }
 #player_head {
     height: 50px;
