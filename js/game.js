@@ -1,46 +1,14 @@
-import {defuzzy} from './fuzzy.js'
+import {defuzzy, move_player} from './fuzzy.js'
 
 /*
     traduccion de coordenadas en pantalla a coordenadas en el plano cartesiano de la pantalla
 */
 function get_plane_position(top_value, left_value) {
-    y_coord = (window.outerHeight / 2) - top_value
-    x_coord = left_value + (window.outerWidth / 2)
+    const y_coord = (window.outerHeight / 2) - top_value
+    const x_coord = left_value + (window.outerWidth / 2)
     // console.log("y_coord", y_coord, "x_coord", x_coord)
     return [x_coord, y_coord]
 }
-
-/*
-                    PARTE FUZZY 
-    variables crisp (entrada):
-    - distancia entre el jugador y la pelota (delta s):
-        * lejos
-        * medio
-        * cerca
-    - angulo de rotacion del jugador hacia la pelota (alfa)
-        * muy girado
-        * girado
-        * recto
-
-    variables linguisticas de output:
-    - angulo de rotacion del jugador para la pelota (delta beta) -> de -15 grados hasta 15 grados
-        * voltear mucho
-        * voltear poco
-        * seguir recto
-    - velocidad del jugador (que tanta distancia puede recorrer por cada iteracion) (v) -> hasta 40 pixeles:
-        * rapido
-        * medio
-        * lento 
-
-    clausulas de horn
-    * si s = lejos, entonces v = rapido
-    * si s = medio, entonces v = medio
-    * si s = cerca, entonces v = lento
-    * si alfa = muy girado, entonces beta = mucho
-    * si alfa = girado, entonces beta = poco
-    * si alfa = recto, entonces beta = recto
-
-*/
 
 function get_delta_s() {
     const player_coords = document.getElementById("player").getBoundingClientRect()
@@ -56,22 +24,22 @@ function get_delta_s() {
 
 function get_alpha(ball_coords, player_coords, player_initial_rotation) {
     // y coords => top, x coords => left
-    delta_y = ball_coords[1] - player_coords[1]
-    delta_x = ball_coords[0] - player_coords[0]
+    let delta_y = ball_coords[1] - player_coords[1]
+    let delta_x = ball_coords[0] - player_coords[0]
     delta_y = Math.abs(delta_y) > 50 ? delta_y : 0
     // theta = angulo que el jugador debe girar para ver a la pelota 
-    theta = Math.atan2(delta_y, delta_x)
-    turn_right_deg = 0
-    turn_left_deg = 0
+    let theta = Math.atan2(delta_y, delta_x)
+    let turn_right_deg = 0
+    let turn_left_deg = 0
     // arctan devuelve numeros negativos para 180-360 y positivos para 0-180, hay que traducirlos a grados 
-    theta_deg = theta < 0 ? (theta * (180/Math.PI) + (2*Math.PI)) : (theta * (180/Math.PI))
+    let theta_deg = theta < 0 ? (theta * (180/Math.PI) + (2*Math.PI)) : (theta * (180/Math.PI))
     console.log("delta_y", delta_y, "delta_x", delta_x, "theta", theta, "dheta d", theta_deg)
 
     // para ver cual es la mejor direccion a girar se prueba girando a la derecha y luego a la izquierda 
     // la direccion que de el menor angulo de rotacion es la mejor direccion a tomar
     turn_right_deg = player_initial_rotation >= theta_deg ? (player_initial_rotation - theta_deg) : (player_initial_rotation - (theta_deg - 360))
     turn_left_deg = theta_deg >= player_initial_rotation ? (theta_deg - player_initial_rotation) : (theta_deg - (player_initial_rotation - 360))
-    best_alpha = turn_right_deg <= turn_left_deg ? [Math.abs(turn_right_deg),"clockwise"] : [-1 * Math.abs(turn_left_deg), "counterclockwise"]
+    let best_alpha = turn_right_deg <= turn_left_deg ? [Math.abs(turn_right_deg),"clockwise"] : [-1 * Math.abs(turn_left_deg), "counterclockwise"]
     // Si el jugador ya esta viendo la pelota, seguir recto; de lo contrario girar
     if (theta_deg == 0)
         best_alpha = [0, "recto"]
@@ -87,20 +55,20 @@ function get_alpha(ball_coords, player_coords, player_initial_rotation) {
 */
 $(document).ready(function () {
     // iniciar jugador y pelota con posiciones random
-    angle = Math.floor((Math.random() * 360) + 1) * -1;
+    let angle = Math.floor((Math.random() * 360) + 1) * -1;
     // angle =0
-    top_player = Math.floor((Math.random() * 60) + 21);
-    left_player = Math.floor((Math.random() * 60) + 21);
-    top_ball = Math.floor((Math.random() * 90) + 1);
-    left_ball = Math.floor((Math.random() * 90) + 1);
+    let top_player = Math.floor((Math.random() * 60) + 21);
+    let left_player = Math.floor((Math.random() * 60) + 21);
+    let top_ball = Math.floor((Math.random() * 90) + 1);
+    let left_ball = Math.floor((Math.random() * 90) + 1);
     $('#player').css({'position': 'absolute','top': top_player + 'vh', 'left': left_player+ 'vw', '-webkit-transform': 'rotate(' + angle + 'deg)'});
     $('#ball').css({'top': top_ball + 'vh', 'left': left_ball+ 'vw'});
     var c = 0
     var angle_threshold = 5
     var distance_threshold = 200
     var inter = setInterval(function(){ 
-        player_x = 0
-        player_y = 0
+        // let player_x = 0
+        // let player_y = 0
         const player_coords = document.getElementById("player").getBoundingClientRect()
         const ball_coords = document.getElementById("ball").getBoundingClientRect()
         var delta_s = get_delta_s()
@@ -110,16 +78,16 @@ $(document).ready(function () {
             angle
         )
         console.log("distancia", delta_s, "alpha", alpha[0], "angle", angle)
-        direction = alpha[1]
+        let direction = alpha[1]
         alpha = (Math.abs(alpha[0]) >=  angle_threshold) ? alpha[0] : 0
         // if ((Math.abs(alpha) >=  angle_threshold) | delta_s > distance_threshold) { //si todavia esta lejos, que haga la parte fuzzy
         if (c < 30){
-            res = defuzzy(delta_s, alpha)
-            beta = direction == "clockwise" ? res.beta : res.beta * -1
-            v = res.s
+            let res = defuzzy(delta_s, alpha)
+            let beta = direction == "clockwise" ? res.beta : res.beta * -1
+            let v = res.s
             console.log("resultados:", beta, v, "beta og", res.beta)
-            move = move_player(alpha, beta, angle, player_coords)
-            transform = move.transform
+            let move = move_player(delta_s, alpha, beta, v, angle, player_coords, direction)
+            let transform = move.transform
             angle = move.angle
             // $('#player').css({'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': player_x + 'px', 'top': player_y + 'px'});
             $('#player').css(transform);

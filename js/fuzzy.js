@@ -1,3 +1,4 @@
+
 /*
                     PARTE FUZZY 
     variables crisp (entrada):
@@ -31,9 +32,9 @@
 */
 
 function get_screen_diagonal() {
-    w = window.outerWidth; 
-    h = window.outerHeight; 
-    max_distance = Math.sqrt(w*w + h*h);
+    const w = window.outerWidth; 
+    const h = window.outerHeight; 
+    const max_distance = Math.sqrt(w*w + h*h);
     // console.log("screen diagonal:", max_distance)
     return max_distance
 }
@@ -45,69 +46,69 @@ function get_screen_diagonal() {
 */
 
 function eval_horn(delta_s, alpha, consecuente_v, consecuente_beta) {
-    output = []
-    D = get_screen_diagonal()
-    max_angle = 180
-    max_beta = 30
-    max_distance = 40
+    let output = []
+    const D = get_screen_diagonal()
+    let max_angle = 180
+    let max_beta = 30
+    let max_distance = 40
     // clausulas para obtener beta 
     if (typeof consecuente_beta != "undefined") {
-        bc1 = Math.min(
+        const bc1 = Math.min(
                 get_membership_value(consecuente_beta, [-max_beta, max_beta], [0, max_beta/2], [max_beta/2, 0], -max_beta, max_beta), // girar mucho
                 get_membership_value(alpha, [-max_angle, max_angle], [0,max_angle/2], [max_angle/2, 0], -max_angle, max_angle) // muy girado 
         )
-        bc2 = Math.min(
+        const bc2 = Math.min(
             // get_membership_value(alpha
                 get_membership_value(consecuente_beta, 0, max_beta/2, max_beta/2, -max_beta, max_beta), // girar poco
                 get_membership_value(alpha, 0, max_angle/2, max_angle/2, -max_angle, max_angle) // girado 
         )
-        bc3 = Math.min(
+        const bc3 = Math.min(
                 get_membership_value(consecuente_beta, 0, max_beta/4, max_beta/4, -max_beta, max_beta), // ir recto
                 get_membership_value(alpha, 0, max_angle/4, max_angle/4, -max_angle, max_angle) // recto
         )
-        clausulas_beta = [bc1, bc2, bc3]
+        const clausulas_beta = [bc1, bc2, bc3]
         return clausulas_beta
     }
     if (typeof consecuente_v != "undefined") {
         // clausulas para obtener la distancia a recorrer (velocidad)
-        vc1 = Math.min(
+        const vc1 = Math.min(
                 get_membership_value(consecuente_v, max_distance, max_distance/2, 0, 0, max_distance), // rapido
                 get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
         )
-        vc2 = Math.min(
+        const vc2 = Math.min(
                 get_membership_value(consecuente_v, max_distance/2, max_distance/4, max_distance/4, 0, max_distance), // medio
                 get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
         )
-        vc3 = Math.min(
+        const vc3 = Math.min(
                 get_membership_value(consecuente_v, 0, 0, max_distance/4, 0, max_distance), // lento
                 get_membership_value(delta_s, 0, 0, D/2, 0, D), // cerca
         )
-        clausulas_v = [vc1, vc2, vc3]
+        const clausulas_v = [vc1, vc2, vc3]
         return clausulas_v
     }    
 }
-function defuzzy(delta_s, alpha){
-    max_beta = 30
-    max_distance = 40
-    x_beta = range(0, max_beta, 0.5)
-    x_v = range(0, max_distance, 0.5)
-    v_res = []
-    beta_res = []
+export function defuzzy(delta_s, alpha){
+    let max_beta = 30
+    let max_distance = 40
+    let x_beta = range(0, max_beta, 0.5)
+    let x_v = range(0, max_distance, 0.5)
+    let v_res = []
+    let beta_res = []
     for (let index = 0; index < x_beta.length; index++) {
-        const beta = x_beta[index]
-        res_beta = (eval_horn(delta_s, alpha, undefined, beta))
+        let beta = x_beta[index]
+        let res_beta = (eval_horn(delta_s, alpha, undefined, beta))
         beta_res.push(res_beta)
     }
     for (let index = 0; index < x_v.length; index++) {
-        const vel = x_v[index]
-        res_v = (eval_horn(delta_s, alpha, vel, undefined))
+        let vel = x_v[index]
+        let res_v = (eval_horn(delta_s, alpha, vel, undefined))
         v_res.push(res_v)   
     }
     // console.log("velocidad", v_res)
     // console.log("beta", beta_res)
     // console.log("xv", x_v, x_beta)
-    y_velocidad = []
-    y_beta = []
+    let y_velocidad = []
+    let y_beta = []
     v_res.forEach(element => {
         y_velocidad.push(Math.max.apply(Math, element))
     });
@@ -117,19 +118,19 @@ function defuzzy(delta_s, alpha){
     // console.log("velocidad_p", y_velocidad)
     // console.log("beta_p", y_beta)
 
-    product = []
+    let product = []
     // obtencion de centro de gravedad - beta
     for (let i = 0; i < x_beta.length; i++) {
         product.push(x_beta[i] * y_beta[i])
     }
-    cog_beta = sum(product) / sum(y_beta)
+    const cog_beta = sum(product) / sum(y_beta)
     // console.log("product", product,"x_beta", x_beta, "y_beta", y_beta, "sumprod", sum(product), sum(y_beta), "res", cog_beta)
     product = []
     // obtencion de centro de gravedad - velocidad
     for (let i = 0; i < x_v.length; i++) {
         product.push(x_v[i] * y_velocidad[i])
     }
-    cog_v = sum(product) / sum(y_velocidad)
+    const cog_v = sum(product) / sum(y_velocidad)
     // console.log("product", product,"x_beta", x_v, "y_v", y_velocidad, "sumprod", sum(product), sum(y_velocidad), "res", cog_v)
     return {
         "beta": cog_beta,
@@ -146,15 +147,15 @@ function defuzzy(delta_s, alpha){
  * max_f_value -> valor en el eje x maximo de la funcion
 */
 function get_membership_value(input_value, max_member_value, left_range = 0, right_range = 0, min_f_value = 0, max_f_value = Number.POSITIVE_INFINITY){
-    y = 0
+    let y = 0
     // console.log("typeof maxnumber:", typeof max_member_value)
     // las funciones pueden tener mas de un peak
     if (typeof max_member_value != "number") {
-        max_array = [...max_member_value]
-        leftr_arr = [...left_range]
-        rightr_arr = [...right_range]
+        const max_array = [...max_member_value]
+        const leftr_arr = [...left_range]
+        const rightr_arr = [...right_range]
         max_array.forEach(peak => {
-            peak_index = max_array.indexOf(peak)
+            const peak_index = max_array.indexOf(peak)
             // console.log("ranges", leftr_arr, rightr_arr)
             // console.log("peak_index", peak_index, "input", input_value, "ranges", leftr_arr[peak_index], rightr_arr[peak_index], "arr", max_array)
             if ((input_value >= (peak - leftr_arr[peak_index])) & ((peak + rightr_arr[peak_index]) >= input_value)) {
@@ -174,30 +175,30 @@ function get_membership_value(input_value, max_member_value, left_range = 0, rig
     //por el lado izquierdo
     if ((input_value >= (max_member_value - left_range) & (input_value < max_member_value))) {
         // obtener la pendiente del lado izquierdo
-        m = 1 / (max_member_value - (max_member_value - left_range))
+        var m = 1 / (max_member_value - (max_member_value - left_range))
     }
     //por el lado derecho
     else if ((input_value > max_member_value) & ((max_member_value + right_range) >= input_value)){
-        m = -1 / ((max_member_value + right_range) - max_member_value)
+        var m = -1 / ((max_member_value + right_range) - max_member_value)
     }
-    b = 1 - (m * max_member_value)
+    let b = 1 - (m * max_member_value)
     y = (m * input_value) + b
     // console.log("valor de pertenencia", y, "input_value", input_value, "pico_x", max_member_value, "right_range", right_range, "left_range", left_range)
     return y  
 }
 
-function move_player(alpha, beta, angle, player_coords){
+export function move_player(delta_s, alpha, beta, v, angle, player_coords, direction){
     var angle_threshold = 5
     var distance_threshold = 150
-    w = window.outerWidth; 
-    h = window.outerHeight; 
+    const w = window.outerWidth; 
+    const h = window.outerHeight; 
     angle = Math.abs(alpha) >=  angle_threshold ? angle + beta : angle
     //mover el jugador 
     if (delta_s > distance_threshold & (player_coords.top < h) & (player_coords.left < w)) {
-        player_x = direction == "clockwise" ? (v * Math.cos(angle * Math.PI / 180)) : (v * Math.cos(angle * Math.PI / 180))* -1 
-        tras_x = player_coords.left + player_x;
-        player_y = direction == "clockwise" ? (v * Math.sin(angle * Math.PI / 180)) : (v * Math.sin(angle * Math.PI / 180))* -1 
-        tras_y = player_coords.top + player_y;
+        let player_x = direction == "clockwise" ? (v * Math.cos(angle * Math.PI / 180)) : (v * Math.cos(angle * Math.PI / 180))* -1 
+        var tras_x = player_coords.left + player_x;
+        let player_y = direction == "clockwise" ? (v * Math.sin(angle * Math.PI / 180)) : (v * Math.sin(angle * Math.PI / 180))* -1 
+        var tras_y = player_coords.top + player_y;
     }
     if (player_coords.top > h){
         tras_y = h
@@ -212,7 +213,7 @@ function move_player(alpha, beta, angle, player_coords){
         tras_x = Math.abs(tras_x)
     }
     console.log("l", tras_x, "t", tras_y, angle, "top y left", player_coords.left, player_coords.top, "w y h", w, h)
-    transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'left': tras_x + 'px', 'top': tras_y + 'px'} : // si ya esta viendo en direccion pero le falta acercarse
+    let transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'left': tras_x + 'px', 'top': tras_y + 'px'} : // si ya esta viendo en direccion pero le falta acercarse
                 delta_s < distance_threshold & Math.abs(alpha) >= angle_threshold ? {'-webkit-transform': 'rotate(' + angle + 'deg)'} : // si ya esta cerca pero le falta voltearse
                 {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': tras_x + 'px', 'top': tras_y + 'px'} // si le faltan ambos 
     // transform = {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': player_x + 'px', 'top': player_y + 'px'}
@@ -238,4 +239,11 @@ function range(start, stop, step) {
         result.push(i)
     }
     return result
-};
+}
+
+function sum(arr) {
+    let total = arr.reduce((totalValue, currentValue) => {
+        return totalValue + currentValue
+    }, 0);
+    return total
+}
