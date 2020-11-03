@@ -80,8 +80,8 @@ $(document).ready(function () {
         console.log("distancia", delta_s, "alpha", alpha[0], "angle", angle)
         let direction = alpha[1]
         alpha = (Math.abs(alpha[0]) >=  angle_threshold) ? alpha[0] : 0
-        // if ((Math.abs(alpha) >=  angle_threshold) | delta_s > distance_threshold) { //si todavia esta lejos, que haga la parte fuzzy
-        if (c < 30){
+        if ((Math.abs(alpha) >=  angle_threshold) | delta_s > distance_threshold) { //si todavia esta lejos, que haga la parte fuzzy
+        // if (c < 30){
             let res = defuzzy(delta_s, alpha)
             let beta = direction == "clockwise" ? res.beta : res.beta * -1
             let v = res.s
