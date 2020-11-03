@@ -41,6 +41,14 @@
 
 */
 
+function get_screen_diagonal() {
+    w = window.outerWidth; 
+    h = window.outerHeight; 
+    max_distance = Math.sqrt(w*w + h*h);
+    // console.log("screen diagonal:", max_distance)
+    return max_distance
+}
+
 /*
   * @params
   * delta_s : 
