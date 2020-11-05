@@ -45,6 +45,9 @@ function get_alpha(ball_coords, player_coords, player_initial_rotation) {
     return best_alpha
 }
 
+function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
 
 /*
     init/main function
@@ -94,6 +97,49 @@ $(document).ready(function () {
         else {// de lo contrario, que haga la parte estocastica
             console.log("cerca")
             clearInterval(inter)
+            var player = document.getElementById('player')
+            var ball = document.getElementById('ball')
+            var deg = Math.random() * 90
+            deg = deg + angle
+            console.log(deg)
+            var positionRandom = Math.random() * 20 
+            var offsets = document.getElementById('ball').getBoundingClientRect()
+            var balltop = offsets.top;
+            var ballleft = offsets.left;
+            var yPositionOfPlayer = balltop  + positionRandom
+            var xPositionOfPlayer = ballleft - positionRandom
+            player.style.top = yPositionOfPlayer +"px"
+            player.style.left = xPositionOfPlayer +"px"
+            console.log(yPositionOfPlayer)
+            sleep(1000).then(() => {
+                player.style.mozTransform    = 'rotate('+deg+'deg)'
+                player.style.msTransform     = 'rotate('+deg+'deg)'
+                player.style.oTransform      = 'rotate('+deg+'deg)'
+                player.style.transform       = 'rotate('+deg+'deg)'
+                var offsetsGoal = document.getElementById('goaal').getBoundingClientRect()
+                var goaltop = offsetsGoal.top;
+                var winHeight = window.innerHeight
+                var goalLeft = offsetsGoal.left;
+                var probabilidadDesviar = (Math.random() * winHeight) / 10
+                               
+                var winWidth = window.innerWidth
+                var distancia = (Math.random() * winWidth) + goalLeft
+                if (distancia > winWidth){
+                    distancia = goalLeft + 5
+                }
+                probabilidadDesviar += goaltop
+                console.log(distancia)
+                console.log(probabilidadDesviar)
+                sleep(1000).then(() => {
+                    ball.style.left = distancia + "px"
+                    ball.style.top = probabilidadDesviar +"px"
+                });
+            })
+            
+
+
+            
+            
         }
     }, 100);
     
