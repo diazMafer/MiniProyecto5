@@ -13,7 +13,7 @@ En caso que el comando anterior no funcione, correr:
 ```shell
     python -m SimpleHTTPServer  8001
 ```
-
+Luego abrir en el navegador: localhost:8001
 ## Autores
 Ana Lucía Hernández
 María Fernanda López
