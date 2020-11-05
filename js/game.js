@@ -1,21 +1,28 @@
 import {defuzzy, move_player, get_plane_position} from './fuzzy.js'
 
 /*
-    traduccion de coordenadas en pantalla a coordenadas en el plano cartesiano de la pantalla
-*/
+    Traducción de coordenadas en pantalla a coordenadas en el plano cartesiano de la pantalla
 
+    @returns distancia en diagonal entre la pelota y el jugador. 
+*/
 function get_delta_s() {
     const player_coords = document.getElementById("player").getBoundingClientRect()
     const ball_coords = document.getElementById("ball").getBoundingClientRect()
-    // console.log("player -> top:", player_coords.top, "left:", player_coords.left)
-    // console.log("ball -> top:", ball_coords.top, "left:", ball_coords.left)
     const a = ball_coords.top - player_coords.top
     const b = ball_coords.left - player_coords.left
     const distance = Math.sqrt((a*a) + (b*b)); // obtener la distancia del jugador a la pelota con teorema de pitagoras
     console.log("distancia entre jugador-pelota:", distance)
     return distance
 }
-
+/*
+    Cálculo de ángulo de rotación faltante que el jugador tiene que dar para ver a la pelota directamente. 
+    @params
+    * ball_coords : coordenadas en el plano de la pelota. 
+    * player_coords : coordenadas en el plano de la pelota. 
+    * player_initial_rotation : giro inicial que tiene el jugador al comenzar el juego. 
+    
+    @returns mejor ángulo de rotación y dirección a la cual debe girar (en dirección a las manijas del reloj o en contra). 
+*/
 function get_alpha(ball_coords, player_coords, player_initial_rotation) {
     player_initial_rotation = Math.abs(player_initial_rotation)
     // y coords => top, x coords => left
@@ -39,9 +46,6 @@ function get_alpha(ball_coords, player_coords, player_initial_rotation) {
     // Si el jugador ya esta viendo la pelota, seguir recto; de lo contrario girar
     if (theta_deg == 0)
         best_alpha = [0, "recto"]
-
-    // console.log("player init rotation", player_initial_rotation, "turn left", turn_left_deg, "turn right", turn_right_deg)
-    // console.log("result", best_alpha)
     return best_alpha
 }
 
@@ -55,19 +59,15 @@ function sleep (time) {
 $(document).ready(function () {
     // iniciar jugador y pelota con posiciones random
     let angle = Math.floor((Math.random() * 360) + 1) * -1;
-    // angle =0
     let top_player = Math.floor((Math.random() * 60) + 21);
     let left_player = Math.floor((Math.random() * 60) + 21);
     let top_ball = Math.floor((Math.random() * 90) + 1);
     let left_ball = Math.floor((Math.random() * 90) + 1);
     $('#player').css({'position': 'absolute','top': top_player + 'vh', 'left': left_player+ 'vw', '-webkit-transform': 'rotate(' + angle + 'deg)'});
     $('#ball').css({'top': top_ball + 'vh', 'left': left_ball+ 'vw'});
-    var c = 0
     var angle_threshold = 5
     var distance_threshold = 200
     var inter = setInterval(function(){ 
-        // let player_x = 0
-        // let player_y = 0
         const player_coords = document.getElementById("player").getBoundingClientRect()
         const ball_coords = document.getElementById("ball").getBoundingClientRect()
         var delta_s = get_delta_s()
@@ -80,22 +80,16 @@ $(document).ready(function () {
         let direction = alpha[1]
         alpha = (Math.abs(alpha[0]) >=  angle_threshold) ? alpha[0] : 0
         if ((Math.abs(alpha) >=  angle_threshold) | delta_s > distance_threshold) { //si todavia esta lejos, que haga la parte fuzzy
-        // if (c < 30){
             let res = defuzzy(delta_s, alpha)
             let beta = direction == "clockwise" ? res.beta : res.beta * -1
             let v = res.s
             console.log("resultados:", beta, v, "beta og", res.beta)
-            let move = move_player(delta_s, alpha, beta, v, angle, player_coords, direction)
+            let move = move_player(delta_s, alpha, beta, v, angle, player_coords)
             let transform = move.transform
             angle = move.angle
-            // $('#player').css({'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': player_x + 'px', 'top': player_y + 'px'});
             $('#player').css(transform);
-            // $('#player').css({'-webkit-transform': 'rotate(' + angle + 'deg)'});
-            c +=1
-            // console.log("lejos")
         }
         else {// de lo contrario, que haga la parte estocastica
-            console.log("cerca")
             clearInterval(inter)
             var player = document.getElementById('player')
             var ball = document.getElementById('ball')
@@ -135,11 +129,6 @@ $(document).ready(function () {
                     ball.style.top = probabilidadDesviar +"px"
                 });
             })
-            
-
-
-            
-            
         }
     }, 100);
     

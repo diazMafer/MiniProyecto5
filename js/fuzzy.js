@@ -12,7 +12,7 @@
         * recto
 
     variables linguisticas de output:
-    - angulo de rotacion del jugador para la pelota (delta beta) -> de -15 grados hasta 15 grados
+    - angulo de rotacion del jugador para la pelota (delta beta) -> de -30 grados hasta 30 grados
         * voltear mucho
         * voltear poco
         * seguir recto
@@ -40,9 +40,14 @@ function get_screen_diagonal() {
 }
 
 /*
-  * @params
-  * delta_s : 
-  * alpha : cuántos grados de rotación hacen falta (y en qué dirección) para que el jugador vea a la pelota directamente 
+    Función que realiza la evaluación de las cláusulas de Horn para determinado input. 
+  @params
+  * delta_s : valor input de la distancia entre el jugador y la pelota. 
+  * alpha : cuántos grados de rotación hacen falta (y en qué dirección) para que el jugador vea a la pelota directamente.
+  * consecuente_v : los dos parámetros anteriores son del antecedente de la cláusula. Este parámetro contiene el valor de evaluación del consecuente para la distancia (velocidad)
+        que el player debe moverse. 
+  * consecuente_beta : valor de evaluación de consecuente para el ángulo que el player girará. 
+  @returns un arreglo del valor de evaluación de las cláusulas. 
 */
 
 function eval_horn(delta_s, alpha, consecuente_v, consecuente_beta) {
@@ -87,6 +92,14 @@ function eval_horn(delta_s, alpha, consecuente_v, consecuente_beta) {
         return clausulas_v
     }    
 }
+/*
+    Devuelve los valores de output (distancia a recorrer por iteración y ángulo a girar) para la lógica difusa establecida. 
+    @params 
+    * delta_s : distancia entre player y pelota. 
+    * alpha : ángulo de rotación faltante para que el jugador vea directo a la pelota. 
+    
+    @returns valor calculado para la velocidad y beta. 
+*/
 export function defuzzy(delta_s, alpha){
     let max_beta = 30
     let max_distance = 40
@@ -104,9 +117,6 @@ export function defuzzy(delta_s, alpha){
         let res_v = (eval_horn(delta_s, alpha, vel, undefined))
         v_res.push(res_v)   
     }
-    // console.log("velocidad", v_res)
-    // console.log("beta", beta_res)
-    // console.log("xv", x_v, x_beta)
     let y_velocidad = []
     let y_beta = []
     v_res.forEach(element => {
@@ -115,8 +125,6 @@ export function defuzzy(delta_s, alpha){
     beta_res.forEach(element => {
         y_beta.push(Math.max.apply(Math, element))
     });
-    // console.log("velocidad_p", y_velocidad)
-    // console.log("beta_p", y_beta)
 
     let product = []
     // obtencion de centro de gravedad - beta
@@ -131,7 +139,6 @@ export function defuzzy(delta_s, alpha){
         product.push(x_v[i] * y_velocidad[i])
     }
     const cog_v = sum(product) / sum(y_velocidad)
-    // console.log("product", product,"x_beta", x_v, "y_v", y_velocidad, "sumprod", sum(product), sum(y_velocidad), "res", cog_v)
     return {
         "beta": cog_beta,
         "s": cog_v
@@ -148,7 +155,6 @@ export function defuzzy(delta_s, alpha){
 */
 function get_membership_value(input_value, max_member_value, left_range = 0, right_range = 0, min_f_value = 0, max_f_value = Number.POSITIVE_INFINITY){
     let y = 0
-    // console.log("typeof maxnumber:", typeof max_member_value)
     // las funciones pueden tener mas de un peak
     if (typeof max_member_value != "number") {
         const max_array = [...max_member_value]
@@ -183,11 +189,12 @@ function get_membership_value(input_value, max_member_value, left_range = 0, rig
     }
     let b = 1 - (m * max_member_value)
     y = (m * input_value) + b
-    // console.log("valor de pertenencia", y, "input_value", input_value, "pico_x", max_member_value, "right_range", right_range, "left_range", left_range)
     return y  
 }
-
-export function move_player(delta_s, alpha, beta, v, angle, player_coords, direction){
+/*
+    Mover al jugador en pantalla. 
+*/
+export function move_player(delta_s, alpha, beta, v, angle, player_coords){
     var angle_threshold = 5
     var distance_threshold = 150
     const w = window.innerWidth; 
@@ -196,7 +203,6 @@ export function move_player(delta_s, alpha, beta, v, angle, player_coords, direc
     let angle_abs = Math.abs(angle)
     //mover el jugador 
     if (delta_s > distance_threshold & (player_coords.top < h) & (player_coords.left < w)) {
-        // let player_x = direction == "clockwise" ? (v * Math.cos(angle_abs * Math.PI / 180)) : (v * Math.cos(angle_abs * Math.PI / 180))* -1 
         let player_x = (v * Math.cos(angle_abs * Math.PI / 180))
         var tras_x = player_coords.left + player_x;
         let player_y = (v * Math.sin(angle_abs * Math.PI / 180)) *-1
@@ -215,26 +221,16 @@ export function move_player(delta_s, alpha, beta, v, angle, player_coords, direc
     if (player_coords.left < 0){
         tras_x = Math.abs(tras_x)
     }
-    // w h 1680 1050
-    // const plane_pos = get_plane_position(tras_y, tras_x)
-    // tras_x = plane_pos[0]/2
-    // tras_y = (plane_pos[1]*-1)/2
     console.log("move_player l", tras_x, "t", tras_y, "angle", angle, angle_abs, "top y left", player_coords.top, player_coords.left, "w y h", w, h)
     let transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'left': tras_x + 'px', 'top': tras_y + 'px'} : // si ya esta viendo en direccion pero le falta acercarse
                 delta_s < distance_threshold & Math.abs(alpha) >= angle_threshold ? {'-webkit-transform': 'rotate(' + angle + 'deg)'} : // si ya esta cerca pero le falta voltearse
                 {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': tras_x + 'px', 'top': tras_y + 'px'} // si le faltan ambos 
-    // let transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'-webkit-transform': 'translate('+tras_x+'px, '+tras_y+'px)'} : // si ya esta viendo en direccion pero le falta acercarse
-    //             delta_s < distance_threshold & Math.abs(alpha) >= angle_threshold ? {'-webkit-transform': 'rotate(' + angle + 'deg)'} : // si ya esta cerca pero le falta voltearse
-    //             {'-webkit-transform': 'translate('+tras_x+'px, '+tras_y+'px) rotate(' + angle + 'deg)'} // si le faltan ambos 
-
-    // transform = {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': player_x + 'px', 'top': player_y + 'px'}
     console.log("transform", transform)
     return { 
         "transform": transform, 
         "angle": angle
     }
 }
-
 
 function range(start, stop, step) {
     if (typeof stop == 'undefined') {
@@ -259,10 +255,8 @@ function sum(arr) {
     return total
 }
 
-
 export function get_plane_position(top_value, left_value) {
     const y_coord = (window.innerHeight / 2) - top_value
     const x_coord = left_value + (window.innerWidth / 2)
-    // console.log("y_coord", y_coord, "x_coord", x_coord)
     return [x_coord, y_coord]
 }
