@@ -35,7 +35,6 @@ function get_screen_diagonal() {
     const w = window.innerWidth; 
     const h = window.innerHeight; 
     const max_distance = Math.sqrt(w*w + h*h);
-    // console.log("screen diagonal:", max_distance)
     return max_distance
 }
 
@@ -132,7 +131,6 @@ export function defuzzy(delta_s, alpha){
         product.push(x_beta[i] * y_beta[i])
     }
     const cog_beta = sum(product) / sum(y_beta)
-    console.log("product", product,"x_beta", x_beta, "y_beta", y_beta, "sumprod", sum(product), sum(y_beta), "res", cog_beta)
     product = []
     // obtencion de centro de gravedad - velocidad
     for (let i = 0; i < x_v.length; i++) {
@@ -162,8 +160,6 @@ function get_membership_value(input_value, max_member_value, left_range = 0, rig
         const rightr_arr = [...right_range]
         max_array.forEach(peak => {
             const peak_index = max_array.indexOf(peak)
-            // console.log("ranges", leftr_arr, rightr_arr)
-            // console.log("peak_index", peak_index, "input", input_value, "ranges", leftr_arr[peak_index], rightr_arr[peak_index], "arr", max_array)
             if ((input_value >= (peak - leftr_arr[peak_index])) & ((peak + rightr_arr[peak_index]) >= input_value)) {
                 max_member_value = peak
                 left_range = leftr_arr[peak_index]
@@ -206,7 +202,6 @@ export function move_player(delta_s, alpha, beta, v, angle, player_coords){
         let player_x = (v * Math.cos(angle_abs * Math.PI / 180))
         var tras_x = player_coords.left + player_x;
         let player_y = (v * Math.sin(angle_abs * Math.PI / 180)) *-1
-        console.log("player y og", (v * Math.sin(angle_abs * Math.PI / 180)), "angulo usado", angle_abs)
         var tras_y = player_coords.top + player_y;
     }
     if (player_coords.top > h){
@@ -221,11 +216,9 @@ export function move_player(delta_s, alpha, beta, v, angle, player_coords){
     if (player_coords.left < 0){
         tras_x = Math.abs(tras_x)
     }
-    console.log("move_player l", tras_x, "t", tras_y, "angle", angle, angle_abs, "top y left", player_coords.top, player_coords.left, "w y h", w, h)
     let transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'left': tras_x + 'px', 'top': tras_y + 'px'} : // si ya esta viendo en direccion pero le falta acercarse
                 delta_s < distance_threshold & Math.abs(alpha) >= angle_threshold ? {'-webkit-transform': 'rotate(' + angle + 'deg)'} : // si ya esta cerca pero le falta voltearse
                 {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': tras_x + 'px', 'top': tras_y + 'px'} // si le faltan ambos 
-    console.log("transform", transform)
     return { 
         "transform": transform, 
         "angle": angle
