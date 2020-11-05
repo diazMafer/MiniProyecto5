@@ -1,14 +1,8 @@
-import {defuzzy, move_player} from './fuzzy.js'
+import {defuzzy, move_player, get_plane_position} from './fuzzy.js'
 
 /*
     traduccion de coordenadas en pantalla a coordenadas en el plano cartesiano de la pantalla
 */
-function get_plane_position(top_value, left_value) {
-    const y_coord = (window.outerHeight / 2) - top_value
-    const x_coord = left_value + (window.outerWidth / 2)
-    // console.log("y_coord", y_coord, "x_coord", x_coord)
-    return [x_coord, y_coord]
-}
 
 function get_delta_s() {
     const player_coords = document.getElementById("player").getBoundingClientRect()
@@ -23,6 +17,7 @@ function get_delta_s() {
 }
 
 function get_alpha(ball_coords, player_coords, player_initial_rotation) {
+    player_initial_rotation = Math.abs(player_initial_rotation)
     // y coords => top, x coords => left
     let delta_y = ball_coords[1] - player_coords[1]
     let delta_x = ball_coords[0] - player_coords[0]
@@ -39,7 +34,8 @@ function get_alpha(ball_coords, player_coords, player_initial_rotation) {
     // la direccion que de el menor angulo de rotacion es la mejor direccion a tomar
     turn_right_deg = player_initial_rotation >= theta_deg ? (player_initial_rotation - theta_deg) : (player_initial_rotation - (theta_deg - 360))
     turn_left_deg = theta_deg >= player_initial_rotation ? (theta_deg - player_initial_rotation) : (theta_deg - (player_initial_rotation - 360))
-    let best_alpha = turn_right_deg <= turn_left_deg ? [Math.abs(turn_right_deg),"clockwise"] : [-1 * Math.abs(turn_left_deg), "counterclockwise"]
+    console.log("get alpha angles left", turn_left_deg, "right", turn_right_deg)
+    let best_alpha = turn_right_deg <= turn_left_deg ? [turn_right_deg,"clockwise"] : [-1 * turn_left_deg, "counterclockwise"]
     // Si el jugador ya esta viendo la pelota, seguir recto; de lo contrario girar
     if (theta_deg == 0)
         best_alpha = [0, "recto"]
@@ -77,7 +73,7 @@ $(document).ready(function () {
             get_plane_position(player_coords.top, player_coords.left), 
             angle
         )
-        console.log("distancia", delta_s, "alpha", alpha[0], "angle", angle)
+        console.log("distancia", delta_s, "alpha", alpha, "angle", angle)
         let direction = alpha[1]
         alpha = (Math.abs(alpha[0]) >=  angle_threshold) ? alpha[0] : 0
         if ((Math.abs(alpha) >=  angle_threshold) | delta_s > distance_threshold) { //si todavia esta lejos, que haga la parte fuzzy

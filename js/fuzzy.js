@@ -32,8 +32,8 @@
 */
 
 function get_screen_diagonal() {
-    const w = window.outerWidth; 
-    const h = window.outerHeight; 
+    const w = window.innerWidth; 
+    const h = window.innerHeight; 
     const max_distance = Math.sqrt(w*w + h*h);
     // console.log("screen diagonal:", max_distance)
     return max_distance
@@ -73,11 +73,11 @@ function eval_horn(delta_s, alpha, consecuente_v, consecuente_beta) {
         // clausulas para obtener la distancia a recorrer (velocidad)
         const vc1 = Math.min(
                 get_membership_value(consecuente_v, max_distance, max_distance/2, 0, 0, max_distance), // rapido
-                get_membership_value(delta_s, D, D/2, 0, 0, D), //lejos
+                get_membership_value(delta_s, D, D/6, 0, 0, D), //lejos
         )
         const vc2 = Math.min(
                 get_membership_value(consecuente_v, max_distance/2, max_distance/4, max_distance/4, 0, max_distance), // medio
-                get_membership_value(delta_s, D/2, D/4, D/4, 0, D), // medio
+                get_membership_value(delta_s, D/2, D/3, D/3, 0, D), // medio
         )
         const vc3 = Math.min(
                 get_membership_value(consecuente_v, 0, 0, max_distance/4, 0, max_distance), // lento
@@ -124,7 +124,7 @@ export function defuzzy(delta_s, alpha){
         product.push(x_beta[i] * y_beta[i])
     }
     const cog_beta = sum(product) / sum(y_beta)
-    // console.log("product", product,"x_beta", x_beta, "y_beta", y_beta, "sumprod", sum(product), sum(y_beta), "res", cog_beta)
+    console.log("product", product,"x_beta", x_beta, "y_beta", y_beta, "sumprod", sum(product), sum(y_beta), "res", cog_beta)
     product = []
     // obtencion de centro de gravedad - velocidad
     for (let i = 0; i < x_v.length; i++) {
@@ -165,9 +165,9 @@ function get_membership_value(input_value, max_member_value, left_range = 0, rig
             }
         });
     }
-    if (typeof max_member_value != "number") return 0
+    if (typeof max_member_value != "number") return 0 //si para cuando ya paso la validacion anterior y max_member_value sigue apareciendo como array, es que el input no esta dentro del rango de valores != 0
+    if (input_value === max_member_value) return 1 // si el input es el punto de inflexion
     // si el valor input se encuentra dentro de los valores con pertenencia 0 (fuera de los valores con pendiente)
-    if (input_value === max_member_value) return 1
     if ((input_value >= min_f_value & (input_value <= max_member_value - left_range)) | ((input_value <= max_f_value) & input_value >= (max_member_value + right_range))) {
         return 0
     }
@@ -190,14 +190,17 @@ function get_membership_value(input_value, max_member_value, left_range = 0, rig
 export function move_player(delta_s, alpha, beta, v, angle, player_coords, direction){
     var angle_threshold = 5
     var distance_threshold = 150
-    const w = window.outerWidth; 
-    const h = window.outerHeight; 
+    const w = window.innerWidth; 
+    const h = window.innerHeight; 
     angle = Math.abs(alpha) >=  angle_threshold ? angle + beta : angle
+    let angle_abs = Math.abs(angle)
     //mover el jugador 
     if (delta_s > distance_threshold & (player_coords.top < h) & (player_coords.left < w)) {
-        let player_x = direction == "clockwise" ? (v * Math.cos(angle * Math.PI / 180)) : (v * Math.cos(angle * Math.PI / 180))* -1 
+        // let player_x = direction == "clockwise" ? (v * Math.cos(angle_abs * Math.PI / 180)) : (v * Math.cos(angle_abs * Math.PI / 180))* -1 
+        let player_x = (v * Math.cos(angle_abs * Math.PI / 180))
         var tras_x = player_coords.left + player_x;
-        let player_y = direction == "clockwise" ? (v * Math.sin(angle * Math.PI / 180)) : (v * Math.sin(angle * Math.PI / 180))* -1 
+        let player_y = (v * Math.sin(angle_abs * Math.PI / 180)) *-1
+        console.log("player y og", (v * Math.sin(angle_abs * Math.PI / 180)), "angulo usado", angle_abs)
         var tras_y = player_coords.top + player_y;
     }
     if (player_coords.top > h){
@@ -212,10 +215,18 @@ export function move_player(delta_s, alpha, beta, v, angle, player_coords, direc
     if (player_coords.left < 0){
         tras_x = Math.abs(tras_x)
     }
-    console.log("l", tras_x, "t", tras_y, angle, "top y left", player_coords.left, player_coords.top, "w y h", w, h)
+    // w h 1680 1050
+    // const plane_pos = get_plane_position(tras_y, tras_x)
+    // tras_x = plane_pos[0]/2
+    // tras_y = (plane_pos[1]*-1)/2
+    console.log("move_player l", tras_x, "t", tras_y, "angle", angle, angle_abs, "top y left", player_coords.top, player_coords.left, "w y h", w, h)
     let transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'left': tras_x + 'px', 'top': tras_y + 'px'} : // si ya esta viendo en direccion pero le falta acercarse
                 delta_s < distance_threshold & Math.abs(alpha) >= angle_threshold ? {'-webkit-transform': 'rotate(' + angle + 'deg)'} : // si ya esta cerca pero le falta voltearse
                 {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': tras_x + 'px', 'top': tras_y + 'px'} // si le faltan ambos 
+    // let transform = delta_s > distance_threshold & Math.abs(alpha) <= angle_threshold ? {'-webkit-transform': 'translate('+tras_x+'px, '+tras_y+'px)'} : // si ya esta viendo en direccion pero le falta acercarse
+    //             delta_s < distance_threshold & Math.abs(alpha) >= angle_threshold ? {'-webkit-transform': 'rotate(' + angle + 'deg)'} : // si ya esta cerca pero le falta voltearse
+    //             {'-webkit-transform': 'translate('+tras_x+'px, '+tras_y+'px) rotate(' + angle + 'deg)'} // si le faltan ambos 
+
     // transform = {'-webkit-transform': 'rotate(' + angle + 'deg)', 'left': player_x + 'px', 'top': player_y + 'px'}
     console.log("transform", transform)
     return { 
@@ -246,4 +257,12 @@ function sum(arr) {
         return totalValue + currentValue
     }, 0);
     return total
+}
+
+
+export function get_plane_position(top_value, left_value) {
+    const y_coord = (window.innerHeight / 2) - top_value
+    const x_coord = left_value + (window.innerWidth / 2)
+    // console.log("y_coord", y_coord, "x_coord", x_coord)
+    return [x_coord, y_coord]
 }
